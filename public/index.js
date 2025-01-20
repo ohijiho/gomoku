@@ -2,9 +2,18 @@ const game = new Gomoku();
 const multi = new MultiPlayerGomoku(game);
 
 const stones = { [Gomoku.Stone.EMPTY]: "" };
+const indicators = {};
+
+let selectedCell = null;
+let isTouch = false;
 
 function clickCell(r, c) {
-  multi.move(r, c);
+  if (selectedCell && selectedCell[0] === r && selectedCell[1] === c) {
+    multi.move(r, c);
+  } else {
+    if (selectedCell) mouseEnterLeave(selectedCell[0], selectedCell[1], false);
+    mouseEnterLeave(r, c, true);
+  }
 }
 
 function mouseEnterLeave(r, c, enter) {
@@ -14,37 +23,44 @@ function mouseEnterLeave(r, c, enter) {
 
   const node = cells[r][c];
 
+  if (enter) selectedCell = [r, c];
+
   if (!enter) {
     node.innerHTML = stones[Gomoku.Stone.EMPTY];
   } else if (game.testRule(r, c) === Gomoku.RuleStatus.FORBIDDEN) {
-    node.innerHTML = `<div style="
-      height: ${node.style.height};
-      display: flex;
-      flex-flow: column;
-      justify-content: center;
-      pointer-events: none;
-    "><div style="
-      text-align: center;
-      font-size: ${node.style.height.substring(0, node.style.height.length - 2) * 0.75}px;
-      vertical-align: middle;
-      -webkit-user-select: none; /* Safari */
-      -ms-user-select: none; /* IE 10 and IE 11 */
-      user-select: none; /* Standard syntax */
-    ">&#x274c;</div></div>`;
+    node.innerHTML = indicators[Gomoku.RuleStatus.FORBIDDEN];
   } else {
-    node.innerHTML = stones[game.turn];
+    node.innerHTML = stones[game.turn] + indicators.premove;
   }
 }
 
+let lastMove = null;
+
 game.addEventListener("update", (e) => {
   console.log(e);
+
+  let newLastMove = null;
 
   e.moves.forEach(([r, c]) => {
     const stone = game.board(r, c);
     console.log(r, c, stone);
 
     cells[r][c].innerHTML = stones[stone];
+
+    newLastMove = [r, c];
   });
+
+  if (newLastMove) {
+    if (lastMove) {
+      const [r, c] = lastMove;
+      cells[r][c].innerHTML = stones[game.board(r, c)];
+    }
+
+    const [r, c] = newLastMove;
+    cells[r][c].innerHTML = stones[game.board(r, c)] + indicators.lastMove;
+
+    lastMove = newLastMove;
+  }
 });
 
 const cells = [...Array(game.height).keys()].map((r) =>
@@ -54,10 +70,14 @@ const cells = [...Array(game.height).keys()].map((r) =>
       clickCell(r, c);
     });
     node.addEventListener("mouseenter", () => {
+      if (isTouch) return;
       mouseEnterLeave(r, c, true);
     });
     node.addEventListener("mouseleave", () => {
       mouseEnterLeave(r, c, false);
+    });
+    node.addEventListener("touchstart", () => {
+      isTouch = true;
     });
     return node;
   }),
@@ -158,6 +178,41 @@ function initGame() {
   }
   stones[Gomoku.Stone.BLACK] = stoneHTML("black");
   stones[Gomoku.Stone.WHITE] = stoneHTML("white");
+  indicators[Gomoku.RuleStatus.FORBIDDEN] = `<div style="
+    height: ${size}px;
+    display: flex;
+    flex-flow: column;
+    justify-content: center;
+    pointer-events: none;
+  "><div style="
+    text-align: center;
+    font-size: ${size * 0.75}px;
+    vertical-align: middle;
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10 and IE 11 */
+    user-select: none; /* Standard syntax */
+  ">&#x274c;</div></div>`;
+  const indSize = 5;
+  indicators.lastMove = `<div style="
+    width: ${indSize * 2 + 1}px;
+    height: ${indSize * 2 + 1}px;
+    border-radius: ${indSize + 0.5}px;
+    background: red;
+    position: absolute;
+    left: ${size * 0.5 - indSize}px;
+    top: ${size * 0.5 - indSize}px;
+  "></div>`;
+  const premoveWidth = 3;
+  indicators.premove = `<div style="
+    border-radius: ${size / 2}px;
+    width: ${size - premoveWidth * 2}px;
+    height: ${size - premoveWidth * 2}px;
+    border: ${premoveWidth}px solid lime;
+    pointer-events: none;
+    position: absolute;
+    left: 0;
+    top: 0;
+  " ></div>`;
 }
 
 async function gameLoop() {
