@@ -101,6 +101,27 @@ function initGame() {
   })();
 
   bg.style.position = "absolute";
+
+  const dots = [
+    [7, 7],
+    [3, 3],
+    [3, 11],
+    [11, 3],
+    [11, 11],
+  ];
+  const dotSize = 5;
+  dots.forEach(([r, c]) => {
+    const dot = document.createElement("div");
+    dot.style.background = "black";
+    dot.style.width = `${dotSize * 2}px`;
+    dot.style.height = `${dotSize * 2}px`;
+    dot.style.position = "absolute";
+    dot.style.top = `${r * size + size * 0.5 - dotSize}px`;
+    dot.style.left = `${c * size + size * 0.5 - dotSize}px`;
+    dot.style.borderRadius = `${dotSize}px`;
+    bg.appendChild(dot);
+  });
+
   board.appendChild(bg);
 
   const fg = document.createElement("div");
