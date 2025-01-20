@@ -1,7 +1,7 @@
-const game = new Gomok();
-const multi = new MultiPlayerGomok(game);
+const game = new Gomoku();
+const multi = new MultiPlayerGomoku(game);
 
-const stones = { [Gomok.Stone.EMPTY]: "" };
+const stones = { [Gomoku.Stone.EMPTY]: "" };
 
 function clickCell(r, c) {
   multi.move(r, c);
@@ -99,8 +99,8 @@ function initGame() {
         background: ${background};
     " ></div>`;
   }
-  stones[Gomok.Stone.BLACK] = stoneHTML("black");
-  stones[Gomok.Stone.WHITE] = stoneHTML("white");
+  stones[Gomoku.Stone.BLACK] = stoneHTML("black");
+  stones[Gomoku.Stone.WHITE] = stoneHTML("white");
 }
 
 async function gameLoop() {

@@ -1,4 +1,4 @@
-class MultiPlayerGomok {
+class MultiPlayerGomoku {
   #conn;
   #game;
   #stone;
@@ -63,7 +63,7 @@ class MultiPlayerGomok {
       this.lastStatus = "handshake done";
       this.updateMessage();
 
-      const stones = [Gomok.Stone.BLACK, Gomok.Stone.WHITE];
+      const stones = [Gomoku.Stone.BLACK, Gomoku.Stone.WHITE];
 
       const stoneNumber = (seed & 1) ^ matchResult.number;
       this.#stone = stones[stoneNumber];
@@ -92,7 +92,7 @@ class MultiPlayerGomok {
           res.every((x) => typeof x === "number" && Number.isSafeInteger(x))
         ) {
           if (
-            this.#game.testRule(res[0], res[1]) === Gomok.RuleStatus.FORBIDDEN
+            this.#game.testRule(res[0], res[1]) === Gomoku.RuleStatus.FORBIDDEN
           )
             throw new Error(`received forbidden move: (${res[0]}, ${res[1]})`);
 
@@ -118,7 +118,9 @@ class MultiPlayerGomok {
   async move(r, c) {
     await this.#mutex.lock();
     try {
-      if (this.#game.testRule(r, c, this.#stone) === Gomok.RuleStatus.FORBIDDEN)
+      if (
+        this.#game.testRule(r, c, this.#stone) === Gomoku.RuleStatus.FORBIDDEN
+      )
         return;
 
       await this.#conn.move([r, c]);

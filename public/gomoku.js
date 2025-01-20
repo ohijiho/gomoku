@@ -1,4 +1,4 @@
-class Gomok extends EventTarget {
+class Gomoku extends EventTarget {
   #board;
   #height;
   #width;
@@ -9,7 +9,7 @@ class Gomok extends EventTarget {
 
   #boardFn(r, c) {
     if (r < 0 || r >= this.#height || c < 0 || c > this.#width)
-      return Gomok.Stone.BORDER;
+      return Gomoku.Stone.BORDER;
     return this.#board[r][c];
   }
 
@@ -19,12 +19,12 @@ class Gomok extends EventTarget {
     super();
 
     const { rule, turnMap, width, height } = {
-      ...Gomok.defaultOpts,
+      ...Gomoku.defaultOpts,
       ...(opts ?? {}),
     };
     this.#boundBoardFn = this.#boardFn.bind(this);
     this.#board = [...Array(height).keys()].map(() =>
-      [...Array(width).keys()].map(() => Gomok.Stone.EMPTY),
+      [...Array(width).keys()].map(() => Gomoku.Stone.EMPTY),
     );
     this.#height = height;
     this.#width = width;
@@ -67,11 +67,11 @@ class Gomok extends EventTarget {
     )
       throw new Error(`invalid position: (${r}, ${c})`);
 
-    if (!this.#testStone(stone)) return Gomok.RuleStatus.FORBIDDEN;
+    if (!this.#testStone(stone)) return Gomoku.RuleStatus.FORBIDDEN;
 
-    if (this.#winner) return Gomok.RuleStatus.FORBIDDEN;
+    if (this.#winner) return Gomoku.RuleStatus.FORBIDDEN;
 
-    if (this.board(r, c)) return Gomok.RuleStatus.FORBIDDEN;
+    if (this.board(r, c)) return Gomoku.RuleStatus.FORBIDDEN;
 
     return this.#rule(this.board, this.#turn, r, c);
   }
@@ -80,11 +80,11 @@ class Gomok extends EventTarget {
     const status = this.testRule(r, c, stone);
     stone = this.#turn;
 
-    if (status === Gomok.RuleStatus.FORBIDDEN) return;
+    if (status === Gomoku.RuleStatus.FORBIDDEN) return;
 
     this.#board[r][c] = this.#turn;
 
-    if (status === Gomok.RuleStatus.WINS) this.#winner = this.#turn;
+    if (status === Gomoku.RuleStatus.WINS) this.#winner = this.#turn;
     else this.#turn = this.nextTurn;
 
     this.moves.push([r, c]);
@@ -146,36 +146,36 @@ class Gomok extends EventTarget {
 }
 
 class GomokMoveEvent extends Event {
-  constructor(r, c, stone, gomok) {
+  constructor(r, c, stone, gomoku) {
     super("move");
     this.r = r;
     this.c = c;
     this.stone = stone;
-    this.nextTurn = gomok.turn;
-    this.win = gomok.winner === stone;
+    this.nextTurn = gomoku.turn;
+    this.win = gomoku.winner === stone;
   }
 }
 
 class GomokPassEvent extends Event {
-  constructor(stone, gomok) {
+  constructor(stone, gomoku) {
     super("pass");
     this.stone = stone;
-    this.nextTurn = gomok.turn;
+    this.nextTurn = gomoku.turn;
   }
 }
 
 class GomokGiveUpEvent extends Event {
-  constructor(gomok) {
+  constructor(gomoku) {
     super("giveup");
-    this.stone = gomok.turn;
-    this.winner = gomok.winner;
+    this.stone = gomoku.turn;
+    this.winner = gomoku.winner;
   }
 }
 
 class GomokWinnerEvent extends Event {
-  constructor(gomok) {
+  constructor(gomoku) {
     super("winner");
-    this.winner = gomok.winner;
+    this.winner = gomoku.winner;
   }
 }
 
@@ -189,16 +189,16 @@ class GomokUpdateEvent extends Event {
 (() => {
   const renjuRule = (board, stone, r, c) => {
     switch (stone) {
-      case Gomok.Stone.BLACK:
+      case Gomoku.Stone.BLACK:
         if (renju.testBlackForbidden(board, stone, [r, c]))
-          return Gomok.RuleStatus.FORBIDDEN;
+          return Gomoku.RuleStatus.FORBIDDEN;
         if (renju.testBlackWins(board, stone, [r, c]))
-          return Gomok.RuleStatus.WINS;
-        return Gomok.RuleStatus.ALLOWED;
-      case Gomok.Stone.WHITE:
+          return Gomoku.RuleStatus.WINS;
+        return Gomoku.RuleStatus.ALLOWED;
+      case Gomoku.Stone.WHITE:
         if (renju.testWhiteWins(board, stone, [r, c]))
-          return Gomok.RuleStatus.WINS;
-        return Gomok.RuleStatus.ALLOWED;
+          return Gomoku.RuleStatus.WINS;
+        return Gomoku.RuleStatus.ALLOWED;
     }
     throw new Error(`invalid stone: ${stone}`);
   };
@@ -206,14 +206,14 @@ class GomokUpdateEvent extends Event {
   const defaultOpts = {
     rule: renjuRule,
     turnMap: {
-      0: Gomok.Stone.BLACK,
-      [Gomok.Stone.BLACK]: Gomok.Stone.WHITE,
-      [Gomok.Stone.WHITE]: Gomok.Stone.BLACK,
+      0: Gomoku.Stone.BLACK,
+      [Gomoku.Stone.BLACK]: Gomoku.Stone.WHITE,
+      [Gomoku.Stone.WHITE]: Gomoku.Stone.BLACK,
     },
     width: 15,
     height: 15,
   };
 
-  Gomok.renjuRule = renjuRule;
-  Gomok.defaultOpts = defaultOpts;
+  Gomoku.renjuRule = renjuRule;
+  Gomoku.defaultOpts = defaultOpts;
 })();
