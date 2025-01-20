@@ -1,9 +1,14 @@
 const game = new Gomok();
+const multi = new MultiPlayerGomok(game, "");
+
+multi.loop().then(() => {
+  console.log("disconnected");
+});
 
 const stones = { [Gomok.Stone.EMPTY]: "" };
 
 function clickCell(r, c) {
-  game.move(r, c);
+  multi.move(r, c);
 }
 
 game.addEventListener("update", (e) => {

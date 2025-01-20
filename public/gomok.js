@@ -53,7 +53,7 @@ class Gomok extends EventTarget {
   }
 
   #testStone(stone) {
-    return stone ?? this.#turn === this.#turn;
+    return (stone ?? this.#turn) === this.#turn;
   }
 
   testRule(r, c, stone) {

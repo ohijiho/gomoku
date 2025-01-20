@@ -3,7 +3,7 @@ class Mutex {
   #unlock;
 
   async lock() {
-    while (!tryLock()) await this.#lock;
+    while (!this.tryLock()) await this.#lock;
   }
 
   tryLock() {
@@ -15,6 +15,7 @@ class Mutex {
   }
 
   unlock() {
+    this.#lock = null;
     this.#unlock();
   }
 }
@@ -37,6 +38,25 @@ class Signal {
     this.#wait = new Promise((resolve) => {
       this.#notify = resolve;
     });
+  }
+}
+
+class ConditionVariable {
+  #wait;
+  #resolve;
+
+  constructor() {
+    this.#wait = new Promise((resolve) => {
+      this.#resolve = resolve;
+    });
+  }
+
+  async wait() {
+    return this.#wait;
+  }
+
+  resolve() {
+    this.#resolve();
   }
 }
 
@@ -64,7 +84,7 @@ class Barrier {
 }
 
 (() => {
-  const m = { Mutex, Signal, Barrier };
+  const m = { Mutex, Signal, ConditionVariable, Barrier };
   try {
     module.exports = m;
   } catch (e) {}
