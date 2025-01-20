@@ -7,6 +7,32 @@ function clickCell(r, c) {
   multi.move(r, c);
 }
 
+function mouseEnterLeave(r, c, enter) {
+  if (game.board(r, c)) return;
+
+  if (game.turn !== multi.stone) return;
+
+  const node = cells[r][c];
+
+  if (!enter) {
+    node.innerHTML = stones[Gomoku.Stone.EMPTY];
+  } else if (game.testRule(r, c) === Gomoku.RuleStatus.FORBIDDEN) {
+    node.innerHTML = `<div style="
+      height: ${node.style.height};
+      display: flex;
+      flex-flow: column;
+      justify-content: center;
+      pointer-events: none;
+    "><div style="
+      text-align: center;
+      font-size: ${node.style.height.substring(0, node.style.height.length - 2) * 0.75}px;
+      vertical-align: middle;
+    ">&#x274c;</div></div>`;
+  } else {
+    node.innerHTML = stones[game.turn];
+  }
+}
+
 game.addEventListener("update", (e) => {
   console.log(e);
 
@@ -23,6 +49,12 @@ const cells = [...Array(game.height).keys()].map((r) =>
     const node = document.createElement("div");
     node.addEventListener("click", () => {
       clickCell(r, c);
+    });
+    node.addEventListener("mouseenter", () => {
+      mouseEnterLeave(r, c, true);
+    });
+    node.addEventListener("mouseleave", () => {
+      mouseEnterLeave(r, c, false);
     });
     return node;
   }),
@@ -93,10 +125,11 @@ function initGame() {
 
   function stoneHTML(background) {
     return `<div style="
-        border-radius: ${size / 2}px;
-        width: ${size}px;
-        height: ${size}px;
-        background: ${background};
+      border-radius: ${size / 2}px;
+      width: ${size}px;
+      height: ${size}px;
+      background: ${background};
+      pointer-events: none;
     " ></div>`;
   }
   stones[Gomoku.Stone.BLACK] = stoneHTML("black");
