@@ -1,4 +1,3 @@
-const http = require("http");
 const express = require("express");
 const crypto = require("node:crypto");
 const { Barrier, Signal, ConditionVariable } = require("./public/util");
@@ -85,7 +84,7 @@ async function poll(req, res, s, promise, cb, timeoutMS) {
 
     if (!x) return;
 
-    res.send(x);
+    res.json(x);
 
     if (x.ok && cb) cb(x.value);
   } finally {
@@ -109,7 +108,7 @@ app.post("/", async (req, res) => {
 
     register(id, value.register);
 
-    res.send({});
+    res.json({});
     return;
   }
 
@@ -159,7 +158,7 @@ app.post("/", async (req, res) => {
     s.move = value.move;
     s.sig.notify();
 
-    res.send({});
+    res.json({});
   } else if (value === Command.NEXT_MOVE) {
     if (!s.established) {
       res.status(409).end();
@@ -178,7 +177,7 @@ app.post("/", async (req, res) => {
   } else if (value === Command.DISCONNECT) {
     console.log(`disconnected ${id}`);
     s.disconnected.resolve();
-    res.send({});
+    res.json({});
   } else {
     res.status(400).end();
   }
