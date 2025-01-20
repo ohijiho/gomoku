@@ -90,5 +90,20 @@ class Barrier {
   } catch (e) {}
   try {
     Object.assign(window, m);
+
+    if (!crypto.randomUUID)
+      crypto.randomUUID = () => {
+        const buf = crypto.getRandomValues(new Uint8Array(16));
+        const hex = [...buf]
+          .map((x) => x.toString(16).padStart(2, "0"))
+          .join("");
+        return [
+          hex.substring(0, 8),
+          hex.substring(8, 12),
+          hex.substring(12, 16),
+          hex.substring(16, 20),
+          hex.substring(20, 32),
+        ].join("-");
+      };
   } catch (e) {}
 })();
