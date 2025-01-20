@@ -10,7 +10,7 @@ function clickCell(r, c) {
 function mouseEnterLeave(r, c, enter) {
   if (game.board(r, c)) return;
 
-  //if (game.turn !== multi.stone) return;
+  if (game.turn !== multi.stone) return;
 
   const node = cells[r][c];
 
