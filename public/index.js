@@ -10,7 +10,7 @@ function clickCell(r, c) {
 function mouseEnterLeave(r, c, enter) {
   if (game.board(r, c)) return;
 
-  if (game.turn !== multi.stone) return;
+  //if (game.turn !== multi.stone) return;
 
   const node = cells[r][c];
 
@@ -67,7 +67,7 @@ function initGame() {
   const size = 50;
   const container = document.getElementById("game_container");
   const board = document.createElement("div");
-  board.style.background = "yellow";
+  board.style.background = "#dcb766";
   board.style.margin = "0 auto";
   board.style.width = `${size * game.width}px`;
   board.style.height = `${size * game.height}px`;
@@ -109,16 +109,16 @@ function initGame() {
     [11, 3],
     [11, 11],
   ];
-  const dotSize = 5;
+  const dotSize = 3;
   dots.forEach(([r, c]) => {
     const dot = document.createElement("div");
     dot.style.background = "black";
-    dot.style.width = `${dotSize * 2}px`;
-    dot.style.height = `${dotSize * 2}px`;
+    dot.style.width = `${dotSize * 2 + 1}px`;
+    dot.style.height = `${dotSize * 2 + 1}px`;
     dot.style.position = "absolute";
     dot.style.top = `${r * size + size * 0.5 - dotSize}px`;
     dot.style.left = `${c * size + size * 0.5 - dotSize}px`;
-    dot.style.borderRadius = `${dotSize}px`;
+    dot.style.borderRadius = `${dotSize + 0.5}px`;
     bg.appendChild(dot);
   });
 
