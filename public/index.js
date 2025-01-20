@@ -27,6 +27,9 @@ function mouseEnterLeave(r, c, enter) {
       text-align: center;
       font-size: ${node.style.height.substring(0, node.style.height.length - 2) * 0.75}px;
       vertical-align: middle;
+      -webkit-user-select: none; /* Safari */
+      -ms-user-select: none; /* IE 10 and IE 11 */
+      user-select: none; /* Standard syntax */
     ">&#x274c;</div></div>`;
   } else {
     node.innerHTML = stones[game.turn];
