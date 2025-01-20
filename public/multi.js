@@ -5,12 +5,13 @@ class MultiPlayerGomok {
   #turnSignal;
   #mutex;
 
-  constructor(game, info) {
+  constructor(game, registerMetadata) {
     this.#conn = new Conn();
     this.#game = game;
-    this.info = info;
+    this.registerMetadata = registerMetadata;
     this.#mutex = new Mutex();
     this.#turnSignal = new Signal();
+    this.lastStatus = "";
   }
 
   #loopRunning;
@@ -20,6 +21,7 @@ class MultiPlayerGomok {
 
     this.#game.addEventListener("update", () => {
       this.#turnSignal.notify();
+      this.updateMessage();
     });
 
     const end = new Promise((resolve) => {
@@ -30,7 +32,10 @@ class MultiPlayerGomok {
     });
 
     try {
-      await this.#register(this.info);
+      await this.#register(this.registerMetadata);
+
+      this.lastStatus = `waiting for <a href="?matchingKey=${this.registerMetadata.matchingKey}">matching</a>`;
+      this.updateMessage();
 
       const matchResult = await this.#match();
       if (!matchResult.ok) {
@@ -39,11 +44,15 @@ class MultiPlayerGomok {
       }
 
       this.opponentInfo = matchResult.info;
+      this.updateMessage();
       const seed = matchResult.seed;
       if (!Number.isSafeInteger(seed))
         throw new Error("invalid seed from server");
       if (matchResult.number !== 0 && matchResult.number !== 1)
         throw new Error("invalid number from server");
+
+      this.lastStatus = "found opponent";
+      this.updateMessage();
 
       const handshakeResult = await this.#handshake();
       if (handshakeResult !== "ok") {
@@ -51,17 +60,24 @@ class MultiPlayerGomok {
         throw new Error(`handshake failed: ${JSON.stringify(handshakeResult)}`);
       }
 
+      this.lastStatus = "handshake done";
+      this.updateMessage();
+
       const stones = [Gomok.Stone.BLACK, Gomok.Stone.WHITE];
 
       const stoneNumber = (seed & 1) ^ matchResult.number;
       this.#stone = stones[stoneNumber];
+      this.updateMessage();
 
       console.log(`You are ${this.#stone}`);
 
       this.#turnSignal.notify();
 
       for (;;) {
-        while (this.#game.turn === this.#stone) await this.#turnSignal.wait();
+        if (this.#game.turn === this.#stone) {
+          await Promise.race([this.#turnSignal.wait(), end]);
+          if (this.#game.winner) break;
+        }
 
         const res = await this.#nextMove();
         if (res === Poll.DISCONNECTED) return;
@@ -91,6 +107,9 @@ class MultiPlayerGomok {
       }
     } finally {
       await this.disconnect();
+
+      this.lastStatus = "disconnected";
+      this.updateMessage();
     }
 
     await end;
@@ -144,8 +163,8 @@ class MultiPlayerGomok {
     while (this.#game.turn !== this.#stone) await this.#turnSignal.wait();
   }
 
-  async #register(info) {
-    await this.#conn.send({ register: info });
+  async #register(meta) {
+    await this.#conn.send({ register: meta });
   }
 
   async disconnect() {
@@ -162,5 +181,19 @@ class MultiPlayerGomok {
 
   get stone() {
     return this.#stone;
+  }
+
+  get message() {
+    return `
+      <div>Opponent: ${JSON.stringify(this.opponentInfo)}</div>
+      <div>Your Stone: ${this.#stone}</div>
+      <div>Turn: ${this.#game.turn}</div>
+      <div>Winner: ${this.#game.winner}</div>
+      <div>${this.lastStatus}</div>
+    `;
+  }
+
+  updateMessage() {
+    if (this.messageContainer) this.messageContainer.innerHTML = this.message;
   }
 }

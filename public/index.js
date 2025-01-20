@@ -1,9 +1,5 @@
 const game = new Gomok();
-const multi = new MultiPlayerGomok(game, "");
-
-multi.loop().then(() => {
-  console.log("disconnected");
-});
+const multi = new MultiPlayerGomok(game);
 
 const stones = { [Gomok.Stone.EMPTY]: "" };
 
@@ -13,11 +9,6 @@ function clickCell(r, c) {
 
 game.addEventListener("update", (e) => {
   console.log(e);
-
-  const winner = game.winner;
-  if (winner) {
-    statusDiv.innerHTML = `<h1 style="text-align: center; margin: 0;">Winner: ${winner}</h1>`;
-  }
 
   e.moves.forEach(([r, c]) => {
     const stone = game.board(r, c);
@@ -38,8 +29,9 @@ const cells = [...Array(game.height).keys()].map((r) =>
 );
 
 const statusDiv = document.createElement("div");
+multi.messageContainer = statusDiv;
 
-addEventListener("load", () => {
+function initGame() {
   const size = 50;
   const container = document.getElementById("game_container");
   const board = document.createElement("div");
@@ -109,4 +101,43 @@ addEventListener("load", () => {
   }
   stones[Gomok.Stone.BLACK] = stoneHTML("black");
   stones[Gomok.Stone.WHITE] = stoneHTML("white");
+}
+
+async function gameLoop() {
+  await multi.loop().then(() => {
+    console.log("disconnected");
+  });
+}
+
+addEventListener("load", () => {
+  const container = document.getElementById("game_container");
+
+  const query = new URL(location.href).searchParams;
+  const matchingKey = query.get("matchingKey");
+  const name = query.get("infoName");
+
+  if (matchingKey && name) {
+    multi.registerMetadata = { matchingKey, info: { name } };
+
+    initGame();
+    gameLoop();
+    return;
+  }
+
+  if (matchingKey) {
+    container.innerHTML = `<form action="">
+        <input type="hidden" name="matchingKey" value="${matchingKey}" />
+        <label>
+          <span>Name: </span>
+          <input name="infoName" />
+        </label>
+        <input type="submit" />
+      </form>`;
+  } else {
+    const privateKey = crypto.randomUUID();
+    container.innerHTML = `
+      <div><a href="?matchingKey=public"><h1>Public</h1></a></div>
+      <div><a href="?matchingKey=${privateKey}"><h1>Private</h1></a></div>
+    `;
+  }
 });

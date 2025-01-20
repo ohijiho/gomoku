@@ -10,9 +10,9 @@ const port = +(process.env.PORT ?? 3000);
 app.use(express.json());
 
 const store = new Map();
-let lastRegistered = null;
+const matchingMap = new Map();
 
-function register(id, info) {
+function register(id, { info, matchingKey }) {
   const s = {
     id,
     info,
@@ -29,13 +29,14 @@ function register(id, info) {
 
   console.log(`registered ${id}`);
 
-  if (!lastRegistered) {
-    lastRegistered = s;
+  if (!matchingMap.has(matchingKey)) {
+    matchingMap.set(matchingKey, s);
     return;
   }
 
-  match(s, lastRegistered);
-  lastRegistered = null;
+  const t = matchingMap.get(matchingKey);
+  matchingMap.delete(matchingKey);
+  match(s, t);
 }
 
 function match(s, t) {
@@ -175,6 +176,7 @@ app.post("/", async (req, res) => {
       })(),
     );
   } else if (value === Command.DISCONNECT) {
+    console.log(`disconnected ${id}`);
     s.disconnected.resolve();
     res.send({});
   } else {
