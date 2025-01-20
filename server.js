@@ -1,8 +1,7 @@
 const express = require("express");
 const crypto = require("node:crypto");
-const { Barrier, Signal, ConditionVariable } = require("./public/util");
+const { Barrier, Signal, ConditionVariable, List } = require("./public/util");
 const { Command, Poll } = require("./public/common");
-const { clearTimeout } = require("timers");
 const app = express();
 const port = +(process.env.PORT ?? 3000);
 
@@ -10,6 +9,9 @@ app.use(express.json());
 
 const store = new Map();
 const matchingMap = new Map();
+const expireList = new List();
+
+const expireDelay = 180e3;
 
 function register(id, { info, matchingKey }) {
   const s = {
@@ -22,11 +24,16 @@ function register(id, { info, matchingKey }) {
     established: false,
     move: null,
     sig: new Signal(),
+    expiresAt: new Date().getTime() + expireDelay,
+    node: undefined,
+    matchingKey,
   };
 
   store.set(id, s);
+  expireList.pushBack(s);
+  s.node = expireList.end.prev;
 
-  console.log(`registered ${id}`);
+  console.log(`registered ${id} ${JSON.stringify(info)}`);
 
   if (!matchingMap.has(matchingKey)) {
     matchingMap.set(matchingKey, s);
@@ -71,7 +78,7 @@ async function poll(req, res, s, promise, cb, timeoutMS) {
   const timeout = new Promise((resolve) => {
     timeoutHandle = setTimeout(() => {
       resolve();
-    }, timeoutMS ?? 30000);
+    }, timeoutMS ?? 60e3);
   });
 
   try {
@@ -117,6 +124,9 @@ app.post("/", async (req, res) => {
     res.status(409).end();
     return;
   }
+
+  s.expiresAt = new Date().getTime() + expireDelay;
+  expireList.splice(s.node, expireList.end);
 
   if (value === Command.MATCH) {
     await poll(
@@ -192,3 +202,21 @@ app.get("/favicon.ico", (req, res) => {
 app.listen(port, () => {
   console.log(`Listening port: ${port}`);
 });
+
+setInterval(() => {
+  const t = new Date().getTime();
+  while (!expireList.empty && t >= expireList.front.expiresAt) {
+    const s = expireList.front;
+    expireList.popFront();
+    if (s.peer) s.peer.disconnected.resolve();
+    store.delete(s.id);
+    if (matchingMap.get(s.matchingKey) === s) matchingMap.delete(s.matchingKey);
+    console.log(`release ${s.id}`);
+  }
+
+  if (store.size || matchingMap.size) {
+    console.log(
+      `store.size: ${store.size}, matchingMap.size: ${matchingMap.size}`,
+    );
+  }
+}, 60e3);

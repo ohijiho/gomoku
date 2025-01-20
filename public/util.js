@@ -1,3 +1,73 @@
+class List {
+  #end;
+
+  constructor() {
+    this.#end = { prev: undefined, next: undefined };
+    this.#end.prev = this.#end;
+    this.#end.next = this.#end;
+  }
+
+  get empty() {
+    return this.#end.next === this.#end;
+  }
+
+  get begin() {
+    return this.#end.next;
+  }
+
+  get end() {
+    return this.#end;
+  }
+
+  insert(before, value) {
+    const node = {
+      value,
+      prev: before.prev,
+      next: before,
+    };
+    node.prev.next = node;
+    node.next.prev = node;
+    return node;
+  }
+
+  erase(node) {
+    node.prev.next = node.next;
+    node.next.prev = node.prev;
+  }
+
+  pushBack(value) {
+    this.insert(this.#end, value);
+  }
+
+  pushFront(value) {
+    this.insert(this.#end.next, value);
+  }
+
+  splice(node, before) {
+    this.erase(node);
+    this.prev = before.prev;
+    this.next = before;
+    node.prev.next = node;
+    node.next.prev = node;
+  }
+
+  get front() {
+    return this.#end.next.value;
+  }
+
+  get back() {
+    return this.#end.prev.value;
+  }
+
+  popFront() {
+    this.erase(this.begin);
+  }
+
+  popBack() {
+    this.erase(this.end.prev);
+  }
+}
+
 class Mutex {
   #lock;
   #unlock;
@@ -84,7 +154,7 @@ class Barrier {
 }
 
 (() => {
-  const m = { Mutex, Signal, ConditionVariable, Barrier };
+  const m = { List, Mutex, Signal, ConditionVariable, Barrier };
   try {
     module.exports = m;
   } catch (e) {}
