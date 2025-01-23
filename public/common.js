@@ -10,6 +10,7 @@ const Command = {
   MATCH: "match",
   HANDSHAKE: "handshake",
   DISCONNECT: "disconnect",
+  PING: "ping",
 };
 
 (() => {

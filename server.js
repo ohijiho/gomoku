@@ -188,6 +188,8 @@ app.post("/", async (req, res) => {
     console.log(`disconnected ${id}`);
     s.disconnected.resolve();
     res.json({});
+  } else if (value === Command.PING) {
+    res.json({});
   } else {
     res.status(400).end();
   }

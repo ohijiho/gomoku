@@ -4,6 +4,8 @@ class MultiPlayerGomoku {
   #stone;
   #turnSignal;
   #mutex;
+  #pingHandle;
+  pingInterval = 30e3;
 
   constructor(game, registerMetadata) {
     this.#conn = new Conn();
@@ -36,6 +38,10 @@ class MultiPlayerGomoku {
 
       this.lastStatus = `waiting for <a href="?matchingKey=${this.registerMetadata.matchingKey}">matching</a>`;
       this.updateMessage();
+
+      setInterval(() => {
+        this.#ping();
+      }, this.pingInterval);
 
       const matchResult = await this.#match();
       if (!matchResult.ok) {
@@ -106,6 +112,8 @@ class MultiPlayerGomoku {
         if (this.#game.turn !== this.#stone) throw new Error("BUG");
       }
     } finally {
+      if (typeof this.#pingHandle !== "undefined")
+        clearInterval(this.#pingHandle);
       await this.disconnect();
 
       this.lastStatus = "disconnected";
@@ -179,6 +187,10 @@ class MultiPlayerGomoku {
 
   async #handshake() {
     return this.#conn.poll(Command.HANDSHAKE);
+  }
+
+  async #ping() {
+    await this.#conn.send(Command.PING);
   }
 
   get stone() {
